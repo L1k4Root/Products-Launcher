@@ -1,0 +1,14 @@
+# Submodules (no versionar el código acá)
+# api-gateway/
+# products-ms/
+# order-ms/
+
+# Basura común (por si acaso)
+**/node_modules/
+# Env files (no versionar)
+.env
+**/.env
+**/dist/
+**/generated/
+**/postgres/
+**/pgdata/

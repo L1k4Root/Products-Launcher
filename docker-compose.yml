@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+
+  nats-server:
+    image: nats:latest
+    ports:
+      - "8222:8222"
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "${CLIENT_PORT}:3000"
+    volumes:
+      - ./api-gateway/src:/app/src
+    command: npm run start:dev
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=800
+      - WATCHPACK_POLLING=true
+    
+  products-ms:
+    build: ./products-ms
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./products-ms/src:/app/src
+    command: npm run start:dev
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=file:./dev.db
+  payments-ms:
+    build: ./payments-ms
+    ports:
+      - "3003:3000"
+    volumes:
+      - ./payments-ms/src:/app/src
+    command: npm run start:dev
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - PORT=3000
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_SUCCESS_URL=http://localhost:3003/payments/success
+      - STRIPE_CANCEL_URL=http://localhost:3003/payments/failure
+      - STRIPE_ENDPOINT_SECRET=${STRIPE_ENDPOINT_SECRET}
+  
+  order-ms:
+    
+    build: ./order-ms
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./order-ms/src:/app/src
+    command: npm run start:dev
+    environment:
+      DATABASE_URL: "postgresql://postgres:132456@order-db:5432/orderdb"
+      NATS_SERVERS: "nats://nats-server:4222"
+    
+    depends_on:
+      - order-db
+
+  order-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 132456
+      POSTGRES_DB: orderdb
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    
+    ports:
+      - "5432:5432"
+
+volumes:
+  order-db-data:
