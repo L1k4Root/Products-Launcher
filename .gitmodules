@@ -10,3 +10,6 @@
 [submodule "payments-ms"]
 	path = payments-ms
 	url = https://github.com/L1k4Root/payments-ms
+[submodule "auth-ms"]
+	path = auth-ms
+	url = https://github.com/L1k4Root/Auth-ms.git
