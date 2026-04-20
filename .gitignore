@@ -12,3 +12,5 @@
 **/generated/
 **/postgres/
 **/pgdata/
+.codex
+.AGENTS.md
