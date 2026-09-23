@@ -1,14 +1,25 @@
 # Products Launcher
 
-Launcher y entorno de desarrollo para una arquitectura de microservicios construida con NestJS. Este repositorio no concentra toda la lógica en un solo backend: coordina varios servicios especializados, los conecta por NATS y permite levantar el sistema completo con Docker Compose.
+Entorno reproducible para explorar una arquitectura de microservicios construida con NestJS, NATS, Prisma, PostgreSQL, Stripe y Docker Compose. Este repositorio no concentra toda la lógica en un solo backend: coordina varios servicios especializados, los conecta por NATS y permite levantar el sistema completo con Docker Compose.
 
-La meta de este README es que alguien sin contacto previo con el proyecto pueda entender:
+Este repositorio funciona como punto de entrada del sistema: fija las versiones de cada microservicio mediante submódulos y permite levantar la arquitectura completa desde un único lugar. La documentación busca que una persona sin contexto previo pueda entender:
 
 1. qué resuelve el sistema;
 2. cómo se divide en microservicios;
 3. cómo viaja una petición entre servicios;
 4. cómo levantarlo localmente;
 5. por dónde conviene leer el código.
+
+## Qué demuestra este proyecto
+
+- Separación de responsabilidades por dominio mediante microservicios.
+- Comunicación síncrona y asíncrona sobre NATS.
+- Persistencia independiente por servicio.
+- Integración de pagos con Stripe mediante checkout y webhooks firmados.
+- Orquestación local reproducible con Docker Compose y submódulos Git.
+- Documentación explícita de limitaciones y decisiones técnicas.
+
+> **Estado:** proyecto de aprendizaje/portfolio. La arquitectura es funcional para desarrollo local, pero incluye componentes deliberadamente no productivos —por ejemplo, autenticación mock y SQLite en catálogo— que están documentados más abajo.
 
 ## Qué hace este proyecto
 
@@ -25,13 +36,13 @@ El sistema modela una plataforma simple de e-commerce interno:
 
 Si es tu primera vez viendo este repo, este es el mejor orden de lectura:
 
-1. Lee [`docker-compose.yml`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/docker-compose.yml) para ver qué servicios existen, qué puertos usan y cómo se conectan.
+1. Lee [`docker-compose.yml`](docker-compose.yml) para ver qué servicios existen, qué puertos usan y cómo se conectan.
 2. Revisa este README completo para entender arquitectura, flujos y variables.
-3. Entra a [`api-gateway`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/api-gateway/README.md) para ver los endpoints HTTP que usa un cliente.
-4. Sigue con [`products-ms`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/products-ms/README.md), porque es el dominio más simple y te ayuda a entender el patrón de comunicación por NATS.
-5. Después revisa [`order-ms`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/order-ms/README.md), donde aparece el flujo más interesante: validación de productos, persistencia y preparación del pago.
-6. Luego ve [`payments-ms`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/payments-ms/README.md) para entender la integración con Stripe y el webhook.
-7. Deja [`auth-ms`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/auth-ms/README.md) para el final: hoy es un servicio mock útil para pruebas, no una implementación productiva.
+3. Entra a [`api-gateway`](api-gateway/README.md) para ver los endpoints HTTP que usa un cliente.
+4. Sigue con [`products-ms`](products-ms/README.md), porque es el dominio más simple y te ayuda a entender el patrón de comunicación por NATS.
+5. Después revisa [`order-ms`](order-ms/README.md), donde aparece el flujo más interesante: validación de productos, persistencia y preparación del pago.
+6. Luego ve [`payments-ms`](payments-ms/README.md) para entender la integración con Stripe y el webhook.
+7. Deja [`auth-ms`](auth-ms/README.md) para el final: hoy es un servicio mock útil para pruebas, no una implementación productiva.
 
 ## Arquitectura en una mirada
 
@@ -203,9 +214,8 @@ STRIPE_ENDPOINT_SECRET=whsec_xxx
 ### 1. Clonar con submódulos
 
 ```bash
-git clone <URL_DEL_REPOSITORIO>
-cd 03-Products-Launcher
-git submodule update --init --recursive
+git clone --recurse-submodules https://github.com/L1k4Root/Products-Launcher.git
+cd Products-Launcher
 ```
 
 ### 2. Preparar variables
@@ -217,13 +227,19 @@ cp .env.template .env
 ### 3. Construir y ejecutar
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 Para dejarlo en background:
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
+```
+
+Para verificar que todos los contenedores quedaron arriba:
+
+```bash
+docker compose ps
 ```
 
 ## Accesos útiles
@@ -248,27 +264,27 @@ Si cambias `CLIENT_PORT`, cambia también la URL pública del gateway.
 
 ### Entrada principal
 
-- [`api-gateway/src/main.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/api-gateway/src/main.ts)
-- [`api-gateway/src/auth/auth.controller.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/api-gateway/src/auth/auth.controller.ts)
-- [`api-gateway/src/products/products.controller.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/api-gateway/src/products/products.controller.ts)
-- [`api-gateway/src/order/order.controller.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/api-gateway/src/order/order.controller.ts)
+- [`api-gateway/src/main.ts`](api-gateway/src/main.ts)
+- [`api-gateway/src/auth/auth.controller.ts`](api-gateway/src/auth/auth.controller.ts)
+- [`api-gateway/src/products/products.controller.ts`](api-gateway/src/products/products.controller.ts)
+- [`api-gateway/src/order/order.controller.ts`](api-gateway/src/order/order.controller.ts)
 
 ### Dominio de catálogo
 
-- [`products-ms/src/products/products.controller.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/products-ms/src/products/products.controller.ts)
-- [`products-ms/src/products/products.service.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/products-ms/src/products/products.service.ts)
-- [`products-ms/prisma/schema.prisma`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/products-ms/prisma/schema.prisma)
+- [`products-ms/src/products/products.controller.ts`](products-ms/src/products/products.controller.ts)
+- [`products-ms/src/products/products.service.ts`](products-ms/src/products/products.service.ts)
+- [`products-ms/prisma/schema.prisma`](products-ms/prisma/schema.prisma)
 
 ### Dominio de órdenes
 
-- [`order-ms/src/orders/orders.controller.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/order-ms/src/orders/orders.controller.ts)
-- [`order-ms/src/orders/orders.service.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/order-ms/src/orders/orders.service.ts)
-- [`order-ms/prisma/schema.prisma`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/order-ms/prisma/schema.prisma)
+- [`order-ms/src/orders/orders.controller.ts`](order-ms/src/orders/orders.controller.ts)
+- [`order-ms/src/orders/orders.service.ts`](order-ms/src/orders/orders.service.ts)
+- [`order-ms/prisma/schema.prisma`](order-ms/prisma/schema.prisma)
 
 ### Integración de pagos
 
-- [`payments-ms/src/payments/payments.controller.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/payments-ms/src/payments/payments.controller.ts)
-- [`payments-ms/src/payments/payments.service.ts`](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/payments-ms/src/payments/payments.service.ts)
+- [`payments-ms/src/payments/payments.controller.ts`](payments-ms/src/payments/payments.controller.ts)
+- [`payments-ms/src/payments/payments.service.ts`](payments-ms/src/payments/payments.service.ts)
 
 ## Limitaciones actuales que conviene conocer
 
@@ -288,11 +304,14 @@ Si cambias `CLIENT_PORT`, cambia también la URL pública del gateway.
 
 ## Documentación adicional
 
-- [Arquitectura](https://docs.nestjs.com/microservices/nats)
+- [Arquitectura del proyecto](docs/architecture.md)
+- [Flujos principales](docs/flows.md)
+- [Guía de desarrollo](docs/development.md)
+- [Ideas y evolución](docs/ideas.md)
+- [Glosario](docs/glossary.md)
+
+### Referencias externas
+
+- [NestJS + NATS](https://docs.nestjs.com/microservices/nats)
 - [Stripe Webhooks](https://docs.stripe.com/webhooks/signature?lang=node)
 - [Prisma Relation Queries](https://www.prisma.io/docs/v6/orm/prisma-client/queries/relation-queries)
-- [docs/architecture.md](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/docs/architecture.md)
-- [docs/flows.md](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/docs/flows.md)
-- [docs/development.md](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/docs/development.md)
-- [docs/ideas.md](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/docs/ideas.md)
-- [docs/glossary.md](/Users/cfs-andres/Workspace/Cursos/Nest+Microservicios/03-Products-Launcher/docs/glossary.md)
